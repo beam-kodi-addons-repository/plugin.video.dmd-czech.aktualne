@@ -13,6 +13,7 @@ import HTMLParser
 import xml.etree.ElementTree as ET
 import email.utils as eut
 import time
+import json
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -133,26 +134,35 @@ def playUrl(url):
 	if (not httpdata):
 		return
 	if httpdata: 
-		videos = re.compile('{[^i]*?image.*?sources:[^]]*?][^}]*?}', re.S).findall(httpdata)
+        title = re.compile('<meta property="og:title" content=".*">'
+                           ).search(httpdata).group(0).replace('">', '')
+        image = re.compile('<meta property="og:image" content=".*">'
+                                 ).search(httpdata).group(0).replace('">', '')
+        description = re.compile('<meta property="og:description" content=".*">'
+                                 ).search(httpdata).group(0).replace('">', '')
+        videos = re.compile('tracks: {.*}]},', re.S).findall(httpdata)
 		if videos:
 			pl=xbmc.PlayList(1)
 			pl.clear()
 			if _firetvhack_ and len(videos) == 1:
 				twice = True        
 			for video in videos:
-				image = 'http:' + re.compile('image: ?\'([^\']*?)\'').search(video).group(1).strip()
-				title = _htmlParser_.unescape(re.compile('title: ?\'([^\']*?)\'').search(video).group(1).strip())
-				description = re.compile('description: ?\'([^\']*?)\'').search(video);
-				if description:				
-					description = _htmlParser_.unescape(description.group(1).strip())
-				sources = re.compile('sources: ?(\[[^\]]*?])', re.S).search(video).group(1)
-				if sources:		
-					versions = re.compile('{[^}]*?}', re.S).findall(sources)
-					if versions:
-						for version in versions:
-							url = re.compile('"file":"([^"]*)"').search(version).group(1).replace('\/','/').strip()
-							mime = re.compile('"type":"([^"]*)"').search(version).group(1).replace('\/','/').strip()
-							quality = re.compile('"label":"([^"]*)"').search(version).group(1).strip()
+                video = re.sub(re.compile('\sadverttime:.*', re.S),
+                               '', video)  # live streams workaround
+                video = video.replace('tracks: ', '')
+                video = re.sub(r'[,\w]*$', '', video)
+                try:
+                    detail = json.loads(video)
+                except ValueError:
+                    showErrorNotification(_lang_(30005))
+                    return
+                if 'MP4' in detail:
+                    sources = detail['MP4']
+                    xbmc.log('"Sources: "' + str(sources))
+                    for version in sources:
+                        url = version['src']
+                        mime = version['type']
+                        quality = version['label']
 							li = xbmcgui.ListItem(title)
 							li.setThumbnailImage(image)							
 							li.addStreamInfo('video', {'language': 'cs'})
