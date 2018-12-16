@@ -151,36 +151,38 @@ def playUrl(url):
                            ).search(httpdata).group(0).replace('">', '')
         description = re.compile('<meta property="og:description" content=".*">'
                                  ).search(httpdata).group(0).replace('">', '')
-        videos = re.compile('tracks: {.*}]},', re.S).findall(httpdata)
+        tryLiveStream = re.compile(
+            '(?<=liveStarter: \{.)(?:.(?!\}\]\]))*.\}\]\}', re.S).findall(httpdata)
+        if not tryLiveStream:
+            videos = re.compile('(?<=MP4\":)(?:.(?!\}\]))*.\}\]', re.S).findall(httpdata)
+        else:
+            tryLiveStream[0] = tryLiveStream[0].replace('tracks:', '')
+            videos = tryLiveStream
         if videos:
             pl = xbmc.PlayList(1)
             pl.clear()
+            li = xbmcgui.ListItem(title)
+            li.setThumbnailImage(image)
+            li.addStreamInfo('video', {'language': 'cs'})
             if _firetvhack_ and len(videos) == 1:
                 twice = True
-            for video in videos:
-                video = re.sub(re.compile('\sadverttime:.*', re.S),
-                               '', video)  # live streams workaround
-                video = video.replace('tracks: ', '')
-                video = re.sub(r'[,\w]*$', '', video)
-                try:
-                    detail = json.loads(video)
-                except ValueError:
-                    showErrorNotification(_lang_(30005))
-                    return
-                if 'MP4' in detail:
-                    sources = detail['MP4']
-                    xbmc.log('"Sources: "' + str(sources))
-                    for version in sources:
-                        url = version['src']
-                        mime = version['type']
-                        quality = version['label']
-                        li = xbmcgui.ListItem(title)
-                        li.setThumbnailImage(image)
-                        li.addStreamInfo('video', {'language': 'cs'})
-                        if (quality == _quality_ and mime == _format_):
-                            xbmc.PlayList(1).add(url, li)
-                            if twice:
-                                xbmc.PlayList(1).add(url, li)
+            try:
+                videos = json.loads(videos[0])
+            except ValueError:
+                showErrorNotification(_lang_(30005))
+                return
+            if not tryLiveStream:
+                for video in videos:
+                    url = video['src']
+                    mime = video['type']
+                    quality = video['label']
+                    if (quality == _quality_ and mime == _format_):
+                        break
+            else:
+                url = videos['HLS'][0]['src']  # 'DASH' or 'HLS'
+            xbmc.PlayList(1).add(url, li)
+            if twice:
+                xbmc.PlayList(1).add(url, li)
             xbmc.Player().play(pl)
         else:
             showErrorNotification(_lang_(30005))
