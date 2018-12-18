@@ -128,49 +128,52 @@ def listItems(offset, urladd):
 	xbmcplugin.endOfDirectory(addon_handle)
 
 def playUrl(url):
-	httpdata = fetchUrl(url, _lang_(30004))
-	twice = False
-	if (not httpdata):
-		return
-	if httpdata: 
-		title = re.compile('<meta property="og:title" content=".*">').search(httpdata).group(0)
-		title = re.sub('<meta property="og:title" content="', '', title).replace('">', '')
-		image = re.compile('<meta property="og:image" content=".*">').search(httpdata).group(0)
-		image = re.sub('<meta property="og:image" content="', '', image).replace('">', '')
-		description = re.compile('<meta property="og:description" content=".*">').search(httpdata).group(0)
-		description = re.sub('<meta property="og:description" content="', '', description).replace('">', '')
-		videos = re.compile('tracks:(?:.(?!\}\]\}))*.\}\]\}', re.S).findall(httpdata)
-		if len(videos) > 1:  # last item in playlist is doubled on page
-			del videos[-1]
-		if videos:
-			pl=xbmc.PlayList(1)
-			pl.clear()
-			if _firetvhack_ and len(videos) == 1:
-				twice = True
-			for video in videos:
-				video = re.sub(re.compile('\sadverttime:.*', re.S), '', video) # live streams workaround
-				video = video.replace('tracks: ', '')
-				video = re.sub(r'[,\w]*$','',video)
-				try:
-					detail = json.loads(video)
-				except ValueError:
-					showErrorNotification(_lang_(30005))
-					return
-				if detail.has_key('MP4'):
-					sources = detail['MP4']
-					for version in sources:
-						url = version['src']
-						quality = version['label']
-						li = xbmcgui.ListItem(title)
-						li.setThumbnailImage(image)
-						li.addStreamInfo('video', {'language': 'cs'})
-						if (quality == _quality_):
-							xbmc.PlayList(1).add(url, li)
-							if twice:
-								xbmc.PlayList(1).add(url, li)
-			xbmc.Player().play(pl)
-		else:
-			showErrorNotification(_lang_(30005))
+    httpdata = fetchUrl(url, _lang_(30004))
+    twice = False
+    if (not httpdata):
+        return
+    if httpdata:
+        title = re.compile('<meta property="og:title" content=".*">'
+                           ).search(httpdata).group(0).replace('">', '')
+        image = re.compile('<meta property="og:image" content=".*">'
+                           ).search(httpdata).group(0).replace('">', '')
+        description = re.compile('<meta property="og:description" content=".*">'
+                                 ).search(httpdata).group(0).replace('">', '')
+        tryLiveStream = re.compile(
+            '(?<=liveStarter: \{.)(?:.(?!\}\]\]))*.\}\]\}', re.S).findall(httpdata)
+        if not tryLiveStream:
+            videos = re.compile('(?<=MP4\":)(?:.(?!\}\]))*.\}\]', re.S).findall(httpdata)
+        else:
+            tryLiveStream[0] = tryLiveStream[0].replace('tracks:', '')
+            videos = tryLiveStream
+        if videos:
+            pl = xbmc.PlayList(1)
+            pl.clear()
+            li = xbmcgui.ListItem(title)
+            li.setThumbnailImage(image)
+            li.addStreamInfo('video', {'language': 'cs'})
+            if _firetvhack_ and len(videos) == 1:
+                twice = True
+            try:
+                videos = json.loads(videos[0])
+            except ValueError:
+                showErrorNotification(_lang_(30005))
+                return
+            if not tryLiveStream:
+                for video in videos:
+                    url = video['src']
+                    quality = video['label']
+                    if (quality == _quality_):
+                        break
+            else:
+                url = videos['HLS'][0]['src']  # 'DASH' or 'HLS'
+            xbmc.PlayList(1).add(url, li)
+            if twice:
+                xbmc.PlayList(1).add(url, li)
+            xbmc.Player().play(pl)
+        else:
+            showErrorNotification(_lang_(30005))
+
 
 def get_params():
         param=[]
@@ -246,7 +249,7 @@ except:
 try:
         name=urllib.unquote_plus(params["name"])
 except:
-        pass
+    pass
 try:
         mode=int(params["mode"])
 except:
