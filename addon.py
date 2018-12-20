@@ -151,7 +151,7 @@ def playUrl(url):
         description = re.compile('<meta property="og:description" content=".*">'
                                  ).search(httpdata).group(0).replace('">', '')
         tryLiveStream = re.compile(
-            '(?<=liveStarter: \{.)(?:.(?!\}\]\]))*.\}\]\}', re.S).findall(httpdata)
+            '(?<=liveStarter: \{.)(?:.(?!\}\]\])){0,1000}(?:[\[\}]\]\})', re.S).findall(httpdata)
         if not tryLiveStream:
             videos = re.compile('(?<=MP4\":)(?:.(?!\}\]))*.\}\]', re.S).findall(httpdata)
         else:
