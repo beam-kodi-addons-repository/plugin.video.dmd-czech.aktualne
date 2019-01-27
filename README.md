@@ -1,3 +1,5 @@
+### This fork adds  support live streams in DVTV
+
 # Video plugin for aktualne.cz
 
 This plugin adds support for online videos from czech website aktualne.cz.
@@ -19,7 +21,9 @@ Try to activate this hack when you have problems with playing videos.
 * Add listing by categories
 * Add searching
 
-Feel free to suggest more. 
+Feel free to suggest more.
+
+### Tento fork přidává podporu živých přenosů pro DVTV
 
 # Video plugin pro aktualne.cz
 
