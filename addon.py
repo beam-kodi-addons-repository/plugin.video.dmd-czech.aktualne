@@ -14,6 +14,8 @@ import xml.etree.ElementTree as ET
 import email.utils as eut
 import time
 import json
+import requests
+from bs4 import BeautifulSoup
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -24,7 +26,7 @@ _addon_ = xbmcaddon.Addon('plugin.video.dmd-czech.aktualne')
 _lang_ = _addon_.getLocalizedString
 _scriptname_ = _addon_.getAddonInfo('name')
 _baseurl_ = 'http://video.aktualne.cz/'
-_homepage_ = 'http://video.aktualne.cz/forcedevice/smart/'
+_homepage_ = 'https://video.aktualne.cz/'
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 _quality_ = _addon_.getSetting('quality')
 _firetvhack_ = _addon_.getSetting('firetvhack') == "true"
@@ -207,18 +209,13 @@ def get_params():
 
 def listShows():
     hdr = {'User-Agent': _UserAgent_, }
-    request = urllib2.Request(_homepage_, headers=hdr)
-    con = urllib2.urlopen(request)
-    data = con.read()
-    con.close()
-    match = re.compile(
-        '<a href="/#porady">.+?</a>.+?<ul class="dropdown">(.+?)</ul>', re.DOTALL).findall(data)
-    if len(match):
-        match2 = re.compile(
-            '<li class="menusec-bvs.+?"><a href="/(.+?)/">(.+?)</a></li>').findall(match[0])
-        if len(match2) > 1:
-            for url2, name in match2:
-                addDir(name, url2, 1)
+    data = requests.get(_homepage_, headers=hdr)
+    polivka = BeautifulSoup(data.text, 'html.parser')
+    videoList = polivka.find('div', class_='header__menu header__menu--section')
+    menuItems = {polozka.get_text(): polozka.get('href') for polozka in videoList.findAll('a')}
+    if len(menuItems):
+        for nazev in menuItems:
+            addDir(nazev, menuItems[nazev].replace('https://video.aktualne.cz/', ''), 1)
     else:
         # add all without parsing, just in case of the change of the page layout
         addDir(u'DV TV', 'dvtv', 1)
