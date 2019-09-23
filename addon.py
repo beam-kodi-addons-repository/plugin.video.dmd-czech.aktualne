@@ -151,7 +151,7 @@ def playUrl(url):
                            ).search(httpdata).group(0).replace('">', '')
         image = re.compile('<meta property="og:image" content=".*">'
                            ).search(httpdata).group(0).replace('">', '')
-        description = re.compile('<meta property="og:description" content=".*">'
+        description = re.compile('<meta property="og:description" content=".*">',  re.DOTALL
                                  ).search(httpdata).group(0).replace('">', '')
         tryLiveStream = re.compile(
             '(?<=liveStarter: \{.)(?:.(?!\}\]\])){0,1000}(?:[\[\}]\]\})', re.S).findall(httpdata)
