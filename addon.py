@@ -211,11 +211,12 @@ def listShows():
     hdr = {'User-Agent': _UserAgent_, }
     data = requests.get(_homepage_, headers=hdr)
     polivka = BeautifulSoup(data.text, 'html.parser')
-    videoList = polivka.find('div', class_='header__menu header__menu--section')
+    videoList = polivka.find('div', class_='header__menu')
     menuItems = {polozka.get_text(): polozka.get('href') for polozka in videoList.findAll('a')}
     if len(menuItems):
         for nazev in menuItems:
-            addDir(nazev, menuItems[nazev].replace('https://video.aktualne.cz/', ''), 1)
+            if menuItems[nazev] != '/':
+                addDir(nazev, menuItems[nazev].replace('https://video.aktualne.cz/', ''), 1)
     else:
         # add all without parsing, just in case of the change of the page layout
         addDir(u'DV TV', 'dvtv', 1)
