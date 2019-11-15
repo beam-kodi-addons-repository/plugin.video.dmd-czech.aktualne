@@ -154,12 +154,16 @@ def playUrl(url):
         description = re.compile('<meta property="og:description" content=".*">',  re.DOTALL
                                  ).search(httpdata).group(0).replace('">', '')
         tryLiveStream = re.compile(
-            '(?<=liveStarter: \{.)(?:.(?!\}\]\])){0,1000}(?:[\[\}]\]\})', re.S).findall(httpdata)
+            '(?<=liveStarter":\{.)(?:.(?!\}\]\])){0,1000}(?:[\[\}]\]\})', re.S).findall(httpdata)
+#         xbmc.log('"tryLiveStream je:')
+#         xbmc.log(str(tryLiveStream))
         if not tryLiveStream:
             videos = re.compile('(?<=MP4\":)(?:.(?!\}\]))*.\}\]', re.S).findall(httpdata)
         else:
-            tryLiveStream[0] = tryLiveStream[0].replace('tracks:', '')
+            tryLiveStream[0] = tryLiveStream[0].replace('tracks":', '')
             videos = tryLiveStream
+#             xbmc.log('"videos jsou:"')
+#             xbmc.log(str(videos[0]))
         if videos:
             pl = xbmc.PlayList(1)
             pl.clear()
