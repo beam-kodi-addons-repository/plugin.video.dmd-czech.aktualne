@@ -147,29 +147,21 @@ def playUrl(url):
     if (not httpdata):
         return
     if httpdata:
-        title = re.compile('<meta property="og:title" content=".*">'
-                           ).search(httpdata).group(0).replace('">', '')
-        image = re.compile('<meta property="og:image" content=".*">'
-                           ).search(httpdata).group(0).replace('">', '')
-        description = re.compile('<meta property="og:description" content=".*">',  re.DOTALL
-                                 ).search(httpdata).group(0).replace('">', '')
-        tryLiveStream = re.compile(
-            '(?<=liveStarter":\{.)(?:.(?!\}\]\])){0,1000}(?:[\[\}]\]\})', re.S).findall(httpdata)
-#         xbmc.log('"tryLiveStream je:')
-#         xbmc.log(str(tryLiveStream))
+        title = re.compile('<meta property="og:title" content="(.*)">').search(httpdata).group(1)
+        image = re.compile('<meta property="og:image" content="(.*)">').search(httpdata).group(1)
+        description = re.compile('<meta property="og:description" content="(.*?)">',  re.DOTALL).search(httpdata).group(1)
+        tryLiveStream = re.compile('(?<=liveStarter":\{.)(?:.(?!\}\]\])){0,1000}(?:[\[\}]\]\})', re.S).findall(httpdata)
         if not tryLiveStream:
             videos = re.compile('(?<=MP4\":)(?:.(?!\}\]))*.\}\]', re.S).findall(httpdata)
         else:
             tryLiveStream[0] = tryLiveStream[0].replace('tracks":', '')
             videos = tryLiveStream
-#             xbmc.log('"videos jsou:"')
-#             xbmc.log(str(videos[0]))
         if videos:
             pl = xbmc.PlayList(1)
             pl.clear()
             li = xbmcgui.ListItem(title)
             li.setThumbnailImage(image)
-            li.addStreamInfo('video', {'language': 'cs'})
+            li.setInfo('video', { 'plot': description })
             if _firetvhack_ and len(videos) == 1:
                 twice = True
             try:
