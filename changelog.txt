@@ -1,6 +1,7 @@
 2020-06-24 [2.0.6a]
  * Funkcni verze (thx Zbyna)
  * Opraven nazev,popisek a obrazek videa v playeru
+ * Funguje standalone bez dmd-common
 2018-12-14 [2.0.5]
  * Fixed playback for new web player
 2018-05-16 [2.0.4]

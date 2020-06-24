@@ -8,7 +8,6 @@ import xbmcaddon
 import urllib
 import urllib2
 import re
-from stats import *
 import HTMLParser
 import xml.etree.ElementTree as ET
 import email.utils as eut
@@ -22,7 +21,7 @@ sys.setdefaultencoding("utf-8")
 
 _rssUrl_ = 'http://video.aktualne.cz/rss/'
 
-_addon_ = xbmcaddon.Addon('plugin.video.dmd-czech.aktualne')
+_addon_ = xbmcaddon.Addon()
 _lang_ = _addon_.getLocalizedString
 _scriptname_ = _addon_.getAddonInfo('name')
 _baseurl_ = 'http://video.aktualne.cz/'
@@ -268,12 +267,9 @@ except:
 
 
 if mode == None or url == None or len(url) < 1:
-    STATS("OBSAH", "Function")
     listShows()
     logDbg("List Shows end")
 elif mode == 1:
-    STATS("listItems", "Function")
     listItems(offset, url)
 elif mode == 10:
-    STATS(url, "Item")
     playUrl(url)
